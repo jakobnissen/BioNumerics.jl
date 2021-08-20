@@ -10,7 +10,7 @@ const COLUMNS = [
     Symbol("Internt nr."),
     Symbol("Sags ID"),
     :Materiale,
-    :Oprettet,
+    :Oprettet, ############# delete, remember to update row parser with new col indices
     :Dyreart,
     :Modtagelsestidspunkt,
     :Udtagelsesdato
@@ -85,9 +85,9 @@ end
 
 function parse_lims(io::IO)
     csv = CSV.File(io,
-        typemap=Dict(Float64 => String),
         decimal=',',
         delim=';',
+        strict=true,
         dateformats=Dict(
             3  => DATETIME_FORMAT,
             8  => DATETIME_FORMAT,

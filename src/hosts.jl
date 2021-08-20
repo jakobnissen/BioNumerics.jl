@@ -282,8 +282,13 @@ but the string `s` must match exactly.
 danish(x::Host) = _HOSTS[Integer(x) + 1][2]
 english(x::Host) = _HOSTS[Integer(x) + 1][3]
 
+Base.print(io::IO, x::Host) = print(io, _HOSTS[Integer(x) + 1][2])
+
 const _HOST_DICT = Dict(v[2] => Host(i-1) for (i, v) in enumerate(_HOSTS))
-Base.parse(::Type{Host}, s::AbstractString) = _HOST_DICT[s]
+function Base.parse(::Type{Host}, s::AbstractString)
+    v = get(_HOST_DICT, s, nothing)
+    v === nothing ? error("Cannot parse \"", s, "\" as Host") : v
+end
 
 export Host
 end # Module

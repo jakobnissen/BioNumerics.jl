@@ -174,9 +174,13 @@ but the string `s` must match exactly.
 danish(x::Material) = _MATERIALS[Integer(x) + 1][2]
 english(x::Material) = _MATERIALS[Integer(x) + 1][3]
 
-const _MATERIAL_DICT = Dict(v[2] => Material(i-1) for (i, v) in enumerate(_MATERIALS))
+Base.print(io::IO, x::Material) = print(io, _MATERIALS[Integer(x) + 1][2])
 
-Base.parse(::Type{Material}, s::AbstractString) = _MATERIAL_DICT[s]
+const _MATERIAL_DICT = Dict(v[2] => Material(i-1) for (i, v) in enumerate(_MATERIALS))
+function Base.parse(::Type{Material}, s::AbstractString)
+    v = get(_MATERIAL_DICT, s, nothing)
+    v === nothing ? error("Cannot parse \"", s, "\" as Material") : v
+end
 
 export Material
 end # module
