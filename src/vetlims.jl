@@ -23,14 +23,17 @@ end
 
 SampleNumber(x::Integer) = SampleNumber(UInt16(x), 0)
 
-function SampleNumber(x::AbstractFloat)
-    fraction, integer = modf(x)
-    fraction = round(fraction, digits=8)
-    while !iszero(modf(fraction)[1])
-        fraction *= 10
-        fraction = round(fraction, digits=8)
+function parse_dot(::Type{SampleNumber}, s::Union{String, SubString{String}})
+    str = strip(s)
+    p = findfirst(isequal(UInt8('.')), codeunits(str))
+    return if p === nothing
+        SampleNumber(parse(UInt16, str), 0)
+    else
+        SampleNumber(
+            parse(UInt16, str[1:prevind(str, p)]),
+            parse(UInt16, str[p+1:end])
+        )
     end
-    return SampleNumber(UInt16(integer), UInt16(fraction))
 end
 
 function Base.show(io::IO, x::SampleNumber)
@@ -48,7 +51,8 @@ function VNumber(s::Union{String, SubString{String}})
     VNumber(parse(UInt32, view(s, 2:10)))
 end 
 
-Base.show(io::IO, v::VNumber) = print(io, summary(v), "(\"V", string(v.x, pad=9), "\")")
+Base.print(io::IO, v::VNumber) = print(io, 'V' * string(v.x, pad=9))
+Base.show(io::IO, v::VNumber) = print(io, summary(v), "(\"", string(v), "\")")
 
 struct SagsNumber
     numbers::UInt32
@@ -64,23 +68,33 @@ function SagsNumber(s::Union{String, SubString{String}})
     SagsNumber(numbers, letters)
 end
 
-function Base.show(io::IO, x::SagsNumber)
-    letters = uppercase(string(x.letters, base=36, pad=6))
-    print(io, summary(x), "(\"SAG-", string(x.numbers, pad=5), '-', letters, "\")")
+function Base.print(io::IO, x::SagsNumber)
+    print(io, "SAG-" * string(x.numbers, pad=5) * '-' * uppercase(string(x.letters, base=36, pad=6)))
 end
+Base.show(io::IO, x::SagsNumber) = print(io, summary(x), "(\"", string(x), "\")")
 
 struct LIMSRow
     samplenum::SampleNumber
     vnum::VNumber
     sag::SagsNumber
     sampledate::Union{Nothing, Date}
-    host::Host
     material::Union{Nothing, Material}
+    host::Host
     receivedate::DateTime
 end
 
 function parse_lims(io::IO)
-    csv = CSV.File(io)
+    csv = CSV.File(io,
+        typemap=Dict(Float64 => String),
+        decimal=',',
+        delim=';',
+        dateformats=Dict(
+            3  => DATETIME_FORMAT,
+            8  => DATETIME_FORMAT,
+            10 => DATETIME_FORMAT,
+            11 => DATE_FORMAT,
+        )
+    )
     if propertynames(csv) != COLUMNS
         error("Found wrong columns, expected $COLUMNS")
     end
@@ -90,7 +104,7 @@ end
 function LIMSRow(row::CSV.Row)
     # We skip rows 1, 2 and 3, which are internal fields. They are, respectively:
     # 128-bit UUID, checksum, datetime modified
-    samplenum = SampleNumber(row[4])
+    samplenum = parse_dot(SampleNumber, row[4])
     vnum = VNumber(row[5])
     sag = SagsNumber(row[6])
     material = let
@@ -102,18 +116,18 @@ function LIMSRow(row::CSV.Row)
         v = row[9]
         ismissing(v) ? nothing : parse(Host, v)
     end
-    receivedate = DateTime(row[10], DATETIME_FORMAT)
+    receivedate = row[10]
     sampledate = let
         v = row[11]
-        ismissing(v) ? nothing : Date(v, DATE_FORMAT)
+        ismissing(v) ? nothing : v
     end
     LIMSRow(
         samplenum,
         vnum,
         sag,
         sampledate,
-        host,
         material,
+        host,
         receivedate,
     )
 end

@@ -100,7 +100,7 @@ const _MATERIALS = Tuple{String, Union{String, Nothing}}[
     ("Pool af trachea", "Pool of tracheal tissue"),
     ("Pool af tracheal- og kloaksvaber", "Pool of tracheal and cloacal swab"),
     ("Pool af trachealsvabere", "Pool of tracheal swabs"),
-    ("Pool af caecale tonsiller", "Pool of cecal tonsils"),
+    ("Pool af caecale tonsiller", "Pool of cecal tonsils"), # NOTE: space-like char '\ua0'
     ("Processing fluid", "Processing fluid"),
     ("Præputium, svaberprøve", "Preputium, swab sample"),
     ("Rektalsvaber", "Rectal swab"),
