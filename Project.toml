@@ -1,0 +1,9 @@
+name = "BioNumerics"
+uuid = "77b28b71-028e-4412-b968-5a82bc6e3354"
+authors = ["Jakob Nybo Nissen <jakobnybonissen@gmail.com>"]
+version = "0.1.0"
+
+[deps]
+DBInterface = "a10d1c49-ce27-4219-8d33-6db1a4562965"
+DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
+ODBC = "be6f12e9-ca4f-5eb2-a339-a4f995cc0291"
