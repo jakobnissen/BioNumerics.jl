@@ -1,3 +1,12 @@
+"Get the English name of the object, or `nothing` if not applicable"
+function english end
+
+"Get the Danish name of the object, or `nothing` if not applicable"
+function danish end
+
+"Get the Latin name of an object, or `nothing` if not applicable"
+function latin end
+
 module Hosts
 import Base.Enums: basetype
 
