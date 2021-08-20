@@ -13,9 +13,40 @@ using CSV
 #using DBInterface
 #using DataFrames # TODO: Is this necessary?
 
+"Get the English name of the object, or `nothing` if not applicable"
+function english end
+
+"Get the Danish name of the object"
+function danish end
+
+function dedup_categories(v::Vector{Tuple{String, Union{Nothing, String}}})
+    d = Dict{Symbol, Tuple{String, Union{Nothing, String}}}()
+    for (da, en) in v
+        sym = to_symbol(da)
+        if !haskey(d, sym) || isnothing(d[sym][2])
+            d[sym] = (da, en)
+        end
+    end
+    return sort!([(k, v[1], v[2]) for (k, v) in d])
+end
+
+function to_symbol(s::String)
+    v = Char[]
+    for char in s
+        if isletter(char) || isdigit(char)
+            push!(v, char)
+        elseif !isempty(v) && last(v) != '_'
+            push!(v, '_')
+        end
+    end
+    Symbol(join(v))
+end
 
 include("hosts.jl")
 using .Hosts
+
+include("materials.jl")
+using .Materials
 
 include("vetlims.jl")
 

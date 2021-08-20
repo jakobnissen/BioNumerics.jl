@@ -69,9 +69,6 @@ function Base.show(io::IO, x::SagsNumber)
     print(io, summary(x), "(\"SAG-", string(x.numbers, pad=5), '-', letters, "\")")
 end
 
-# Dummy object
-struct Material end
-
 struct LIMSRow
     samplenum::SampleNumber
     vnum::VNumber
@@ -79,7 +76,6 @@ struct LIMSRow
     sampledate::Union{Nothing, Date}
     host::Host
     material::Union{Nothing, Material}
-    created::DateTime
     receivedate::DateTime
 end
 
@@ -97,22 +93,19 @@ function LIMSRow(row::CSV.Row)
     samplenum = SampleNumber(row[4])
     vnum = VNumber(row[5])
     sag = SagsNumber(row[6])
-    material = if ismissing(row[7]) # TODO
-        nothing
-    else
-        Material()
+    material = let
+        v = row[7]
+        ismissing(v) ? nothing : parse(Material, v)
     end
-    created = DateTime(row[8], DATETIME_FORMAT)
-    host = if ismissing(row[9])
-        nothing
-    else
-        Hosts.unknown_duck ## TODO
+    # Skip row 8: Created datetime
+    host = let
+        v = row[9]
+        ismissing(v) ? nothing : parse(Host, v)
     end
     receivedate = DateTime(row[10], DATETIME_FORMAT)
-    sampledate = if ismissing(row[11])
-        nothing
-    else
-        Date(row[11], DATE_FORMAT)
+    sampledate = let
+        v = row[11]
+        ismissing(v) ? nothing : Date(v, DATE_FORMAT)
     end
     LIMSRow(
         samplenum,
@@ -121,7 +114,6 @@ function LIMSRow(row::CSV.Row)
         sampledate,
         host,
         material,
-        created,
         receivedate,
     )
 end
