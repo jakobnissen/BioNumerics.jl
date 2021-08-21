@@ -2,7 +2,7 @@ module Hosts
 
 import ..english, ..danish, ..dedup_categories
 
-const _HOSTS = Tuple{String, Union{String, Nothing}}[
+const _HOSTS = dedup_categories(Tuple{String, Union{String, Nothing}}[
     ("Abe", "Monkey"),
     ("Agerhøne", "Grey partridge"),
     ("Agerhøne i opdræt", "Captive-reared grey partridge"),
@@ -264,7 +264,7 @@ const _HOSTS = Tuple{String, Union{String, Nothing}}[
     ("Ænder", "Ducks"),
     ("Æsel", "Donkey"),
     ("Ørn", "Eagle"),
-]  |> dedup_categories
+])
 
 expr = :(@enum Host::UInt16)
 for (sym, da, en) in _HOSTS
@@ -276,15 +276,16 @@ eval(expr)
 Host
 
 Enum type representing the animal species. Can be created with `parse(Host, s)`,
-but the string `s` must match exactly.
+but the string `s` must match exactly. The canonical representation is in Danish.
+Can be displayed using `danish` and `english`.
 """ Host 
 
-danish(x::Host) = _HOSTS[Integer(x) + 1][2]
-english(x::Host) = _HOSTS[Integer(x) + 1][3]
+danish(x::Host) = @inbounds _HOSTS[Integer(x) + 1][2]
+english(x::Host) = @inbounds _HOSTS[Integer(x) + 1][3]
 
-Base.print(io::IO, x::Host) = print(io, _HOSTS[Integer(x) + 1][2])
+Base.print(io::IO, x::Host) = print(io, danish(x))
 
-const _HOST_DICT = Dict(v[2] => Host(i-1) for (i, v) in enumerate(_HOSTS))
+const _HOST_DICT = Dict(danish(i) => i for i in instances(Host))
 function Base.parse(::Type{Host}, s::AbstractString)
     v = get(_HOST_DICT, s, nothing)
     v === nothing ? error("Cannot parse \"", s, "\" as Host") : v

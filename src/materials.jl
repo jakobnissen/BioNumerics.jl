@@ -168,15 +168,16 @@ eval(expr)
 Material
 
 Enum type representing the materials given in VETLIMS. Can be created with `parse(Material, s)`,
-but the string `s` must match exactly.
+but the string `s` must match exactly.  The canonical representation is in Danish.
+Can be displayed using `danish` and `english`.
 """ Material 
 
-danish(x::Material) = _MATERIALS[Integer(x) + 1][2]
-english(x::Material) = _MATERIALS[Integer(x) + 1][3]
+danish(x::Material) = @inbounds _MATERIALS[Integer(x) + 1][2]
+english(x::Material) = @inbounds _MATERIALS[Integer(x) + 1][3]
 
-Base.print(io::IO, x::Material) = print(io, _MATERIALS[Integer(x) + 1][2])
+Base.print(io::IO, x::Material) = print(io, danish(x))
 
-const _MATERIAL_DICT = Dict(v[2] => Material(i-1) for (i, v) in enumerate(_MATERIALS))
+const _MATERIAL_DICT = Dict(danish(i) => i for i in instances(Material))
 function Base.parse(::Type{Material}, s::AbstractString)
     v = get(_MATERIAL_DICT, s, nothing)
     v === nothing ? error("Cannot parse \"", s, "\" as Material") : v

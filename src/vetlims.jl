@@ -30,8 +30,8 @@ function parse_dot(::Type{SampleNumber}, s::Union{String, SubString{String}})
         SampleNumber(parse(UInt16, str), 0)
     else
         SampleNumber(
-            parse(UInt16, str[1:prevind(str, p)]),
-            parse(UInt16, str[p+1:end])
+            parse(UInt16, view(str, 1:prevind(str, p))),
+            parse(UInt16, view(str, p+1:lastindex(str)))
         )
     end
 end
@@ -42,6 +42,14 @@ end
 
 struct VNumber
     x::UInt32
+    
+    function VNumber(x::Integer)
+        ux = UInt32(x)
+        if ux > UInt32(999_999_999)
+            throw(DomainError("Must be at most 9 digits", x))
+        end
+        new(ux)
+    end
 end
 
 function VNumber(s::Union{String, SubString{String}})
@@ -57,6 +65,16 @@ Base.show(io::IO, v::VNumber) = print(io, summary(v), "(\"", string(v), "\")")
 struct SagsNumber
     numbers::UInt32
     letters::UInt32
+
+    function SagsNumber(n::Integer, l::Integer)
+        un, ul = UInt32(n), UInt32(l)
+        if un > UInt32(99999)
+            throw(DomainError("Must be at most 5 digits", un))
+        elseif ul > 0x81bf0fff
+            throw(DomainError("Must be at most \"ZZZZZZ\" base 36", ul))
+        end
+        new(un, ul)
+    end
 end
 
 function SagsNumber(s::Union{String, SubString{String}})
@@ -67,6 +85,8 @@ function SagsNumber(s::Union{String, SubString{String}})
     letters = parse(UInt32, view(s, 11:16), base=36)
     SagsNumber(numbers, letters)
 end
+
+matchnumber(s::SagsNumber, n::Integer) = s.numbers == n
 
 function Base.print(io::IO, x::SagsNumber)
     print(io, "SAG-" * string(x.numbers, pad=5) * '-' * uppercase(string(x.letters, base=36, pad=6)))
